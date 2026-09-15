@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+  <head>
+    <title>BST Comparison Graph</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+
+  <body>
+    <h2>BST Insertion Comparisons</h2>
+
+    <canvas id="comparisonChart"></canvas>
+    <h2>BST Height Comparisons</h2>
+
+    <canvas id="heightChart"></canvas>
+
+    <h2>BST search Comparisons</h2>
+
+    <canvas id="searchChart"></canvas>
+
+    <h2>BST Deletion Comparisons (500 Deletions)</h2>
+    <canvas id="deletionChart"></canvas>
+
+    <script>
+      fetch("bst_comparison_data.csv")
+        .then((response) => response.text())
+        .then((data) => {
+          const rows = data.trim().split("\n")
+          rows.shift()
+
+          const elements = []
+          const randomComparisons = []
+          const sortedComparisons = []
+
+          const randomHeight = []
+          const sortedHeight = []
+
+          const randomSearchComparisons = []
+          const sortedSearchComparisons = []
+
+          rows.forEach((row) => {
+            const values = row.split(",")
+
+            elements.push(Number(values[0]))
+            deletionElements.push(Number(values[0]))
+
+            randomComparisons.push(Number(values[1]))
+            sortedComparisons.push(Number(values[2]))
+
+            randomHeight.push(Number(values[3]))
+            sortedHeight.push(Number(values[4]))
+
+            randomSearchComparisons.push(Number(values[5]))
+            sortedSearchComparisons.push(Number(values[6]))
+          })
+
+          new Chart(document.getElementById("comparisonChart"), {
+            type: "line",
+
+            data: {
+              labels: elements,
+
+              datasets: [
+                {
+                  label: "Random Input",
+                  data: randomComparisons,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted Input",
+                  data: sortedComparisons,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              responsive: true,
+
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Number of Elements (n)",
+                  },
+                },
+
+                y: {
+                  title: {
+                    display: true,
+                    text: "Comparisons",
+                  },
+
+                  beginAtZero: true,
+
+                  max: 50,
+                },
+              },
+            },
+          })
+
+          new Chart(document.getElementById("heightChart"), {
+            type: "line",
+
+            data: {
+              labels: elements,
+
+              datasets: [
+                {
+                  label: "Random Input",
+                  data: randomHeight,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted Input",
+                  data: sortedHeight,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              responsive: true,
+
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Number of Elements (n)",
+                  },
+                },
+
+                y: {
+                  title: {
+                    display: true,
+                    text: "Tree Height",
+                  },
+
+                  beginAtZero: true,
+
+                  max: 50,
+                },
+              },
+            },
+          })
+
+          new Chart(document.getElementById("searchChart"), {
+            type: "line",
+
+            data: {
+              labels: elements,
+
+              datasets: [
+                {
+                  label: "Random BST",
+                  data: randomSearchComparisons,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted BST",
+                  data: sortedSearchComparisons,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              responsive: true,
+
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Number of Elements (n)",
+                  },
+                },
+
+                y: {
+                  title: {
+                    display: true,
+                    text: "Comparisons for 1000 Searches",
+                  },
+
+                  beginAtZero: true,
+                  max: 30000,
+                },
+              },
+            },
+          })
+        })
+    </script>
+  </body>
+</html>

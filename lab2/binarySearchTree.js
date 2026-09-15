@@ -1,4 +1,4 @@
-class Node {
+export class Node {
   constructor(value) {
     this.value = value
     this.left = null
@@ -16,174 +16,118 @@ export class BST {
 
     if (this.root === null) {
       this.root = newNode
-      return 0
+      return
     }
 
     let current = this.root
-    let comparisons = 0
-
     while (true) {
-      comparisons++
-
       if (value < current.value) {
         if (current.left === null) {
           current.left = newNode
-          break
+          return
         }
-
         current = current.left
-      } else {
+      } else if (value > current.value) {
         if (current.right === null) {
           current.right = newNode
-          break
+          return
         }
-
         current = current.right
+      } else {
+        return
       }
     }
-
-    return comparisons
   }
 
-  search(value) {
-    let current = this.root
-    let comparisons = 0
-
-    while (current !== null) {
-      comparisons++
-
-      if (value === current.value) {
-        return comparisons
-      }
-
-      if (value < current.value) {
-        current = current.left
-      } else {
-        current = current.right
-      }
+  inorder(node = this.root, result = []) {
+    if (node !== null) {
+      this.inorder(node.left, result)
+      result.push(node.value)
+      this.inorder(node.right, result)
     }
-
-    return comparisons
+    return result
   }
 
-  delete(value) {
-    let comparisons = 0
-
-    let parent = null
-    let current = this.root
-
-    while (current !== null) {
-      comparisons++
-
-      if (value === current.value) {
-        break
-      }
-
-      parent = current
-
-      if (value < current.value) {
-        current = current.left
-      } else {
-        current = current.right
-      }
+  preorder(node = this.root, result = []) {
+    if (node !== null) {
+      result.push(node.value)
+      this.preorder(node.left, result)
+      this.preorder(node.right, result)
     }
+    return result
+  }
 
-    if (current === null) {
-      return comparisons
+  postorder(node = this.root, result = []) {
+    if (node !== null) {
+      this.postorder(node.left, result)
+      this.postorder(node.right, result)
+      result.push(node.value)
     }
+    return result
+  }
 
-    if (current.left === null && current.right === null) {
-      if (parent === null) {
-        this.root = null
-      } else if (parent.left === current) {
-        parent.left = null
-      } else {
-        parent.right = null
-      }
-
-      return comparisons
+  search(value, node = this.root) {
+    if (node === null) {
+      return false
     }
-
-    if (current.left === null) {
-      if (parent === null) {
-        this.root = current.right
-      } else if (parent.left === current) {
-        parent.left = current.right
-      } else {
-        parent.right = current.right
-      }
-
-      return comparisons
-    }
-
-    if (current.right === null) {
-      if (parent === null) {
-        this.root = current.left
-      } else if (parent.left === current) {
-        parent.left = current.left
-      } else {
-        parent.right = current.left
-      }
-
-      return comparisons
-    }
-
-    let successorParent = current
-    let successor = current.right
-
-    while (successor.left !== null) {
-      comparisons++
-
-      successorParent = successor
-      successor = successor.left
-    }
-
-    current.value = successor.value
-
-    if (successorParent.left === successor) {
-      successorParent.left = successor.right
+    if (value === node.value) {
+      return true
+    } else if (value < node.value) {
+      return this.search(value, node.left)
     } else {
-      successorParent.right = successor.right
+      return this.search(value, node.right)
     }
-
-    return comparisons
   }
 
-  height() {
-    if (this.root === null) {
-      return 0
+  delete(value, node = this.root) {
+    if (node === null) {
+      return null
     }
 
-    const queue = [
-      {
-        node: this.root,
-        level: 1,
-      },
-    ]
-
-    let index = 0
-    let maxHeight = 0
-
-    while (index < queue.length) {
-      const current = queue[index++]
-
-      maxHeight = Math.max(maxHeight, current.level)
-
-      if (current.node.left !== null) {
-        queue.push({
-          node: current.node.left,
-          level: current.level + 1,
-        })
+    if (value < node.value) {
+      node.left = this.delete(value, node.left)
+    } else if (value > node.value) {
+      node.right = this.delete(value, node.right)
+    } else {
+      if (node.left === null && node.right === null) {
+        return null
       }
 
-      if (current.node.right !== null) {
-        queue.push({
-          node: current.node.right,
-          level: current.level + 1,
-        })
+      if (node.left === null) {
+        return node.right
       }
+
+      if (node.right === null) {
+        return node.left
+      }
+
+      let successor = node.right
+      while (successor.left !== null) {
+        successor = successor.left
+      }
+
+      node.value = successor.value
+
+      node.right = this.delete(successor.value, node.right)
     }
 
-    return maxHeight
+    return node
+  }
+
+  /**Validating that the tree still satisfies the BST property */
+
+  isValidBST(node = this.root, min = -Infinity, max = Infinity) {
+    if (node === null) {
+      return true
+    }
+
+    if (node.value <= min || node.value >= max) {
+      return false
+    }
+
+    return (
+      this.isValidBST(node.left, min, node.value) &&
+      this.isValidBST(node.right, node.value, max)
+    )
   }
 }
