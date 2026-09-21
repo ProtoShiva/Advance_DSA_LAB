@@ -1,0 +1,12 @@
+Value: 23, Height: 1, Balance: 0
+Value: 31, Height: 2, Balance: 0
+Value: 64, Height: 1, Balance: 0
+Value: 82, Height: 3, Balance: 0
+Value: 112, Height: 1, Balance: 0
+Value: 156, Height: 2, Balance: 0
+Value: 275, Height: 1, Balance: 0
+Value: 347, Height: 4, Balance: 0
+Value: 389, Height: 1, Balance: 0
+Value: 418, Height: 3, Balance: -1
+Value: 467, Height: 1, Balance: 0
+Value: 491, Height: 2, Balance: 1

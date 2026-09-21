@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>AVL Tree Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 30px;
+        background-color: #ffffff;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 32px;
+        margin-bottom: 40px;
+      }
+
+      h2 {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .chart-container {
+        width: 95%;
+
+        height: 600px;
+
+        margin: 0 auto 60px auto;
+      }
+
+      canvas {
+        width: 100% !important;
+
+        height: 100% !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>AVL Tree Performance Analysis</h1>
+
+    <h2>Search Comparisons vs Number of Elements</h2>
+
+    <div class="chart-container">
+      <canvas id="searchChart"></canvas>
+    </div>
+
+    <h2>AVL Tree Height vs Number of Elements</h2>
+
+    <div class="chart-container">
+      <canvas id="heightChart"></canvas>
+    </div>
+
+    <script>
+      Papa.parse("avl_search_comparisons.csv", {
+        download: true,
+
+        header: true,
+
+        dynamicTyping: true,
+
+        skipEmptyLines: true,
+
+        complete: function (results) {
+          console.log("CSV loaded successfully.")
+
+          const data = results.data
+
+          const randomData = data.filter(
+            (row) => String(row.order).trim().toLowerCase() === "random",
+          )
+
+          const sortedData = data.filter(
+            (row) => String(row.order).trim().toLowerCase() === "sorted",
+          )
+
+          const reverseData = data.filter(
+            (row) => String(row.order).trim().toLowerCase() === "reverse",
+          )
+
+          console.log("Random records:", randomData.length)
+
+          console.log("Sorted records:", sortedData.length)
+
+          console.log("Reverse records:", reverseData.length)
+
+          const randomSearchData = randomData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.average_search_comparisons),
+          }))
+
+          const sortedSearchData = sortedData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.average_search_comparisons),
+          }))
+
+          const reverseSearchData = reverseData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.average_search_comparisons),
+          }))
+
+          const randomHeightData = randomData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.height),
+          }))
+
+          const sortedHeightData = sortedData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.height),
+          }))
+
+          const reverseHeightData = reverseData.map((row) => ({
+            x: Number(row.n),
+
+            y: Number(row.height),
+          }))
+
+          const randomStyle = {
+            label: "Random AVL",
+
+            borderColor: "#2196F3",
+
+            backgroundColor: "#2196F3",
+
+            borderWidth: 2,
+
+            pointRadius: 0,
+
+            pointHoverRadius: 5,
+
+            tension: 0.1,
+
+            fill: false,
+          }
+
+          const sortedStyle = {
+            label: "Sorted AVL",
+
+            borderColor: "#FF6384",
+
+            backgroundColor: "#FF6384",
+
+            borderWidth: 2,
+
+            pointRadius: 0,
+
+            pointHoverRadius: 5,
+
+            tension: 0.1,
+
+            fill: false,
+          }
+
+          const reverseStyle = {
+            label: "Reverse Sorted AVL",
+
+            borderColor: "#4CAF50",
+
+            backgroundColor: "#4CAF50",
+
+            borderWidth: 2,
+
+            pointRadius: 0,
+
+            pointHoverRadius: 5,
+
+            tension: 0.1,
+
+            fill: false,
+          }
+          //graph1 searching comparisons
+
+          const searchCtx = document
+            .getElementById("searchChart")
+            .getContext("2d")
+
+          new Chart(searchCtx, {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  ...randomStyle,
+
+                  data: randomSearchData,
+                },
+
+                {
+                  ...sortedStyle,
+
+                  data: sortedSearchData,
+                },
+
+                {
+                  ...reverseStyle,
+
+                  data: reverseSearchData,
+                },
+              ],
+            },
+
+            options: {
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+              interaction: {
+                mode: "nearest",
+
+                intersect: false,
+              },
+
+              plugins: {
+                legend: {
+                  display: true,
+
+                  position: "top",
+                },
+
+                tooltip: {
+                  callbacks: {
+                    title: function (context) {
+                      return "Number of Elements: " + context[0].parsed.x
+                    },
+
+                    label: function (context) {
+                      return (
+                        context.dataset.label +
+                        ": " +
+                        context.parsed.y.toFixed(2) +
+                        " comparisons/search"
+                      )
+                    },
+                  },
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+
+                  min: 1,
+
+                  max: 1000,
+
+                  title: {
+                    display: true,
+
+                    text: "Number of Elements (n)",
+
+                    font: {
+                      size: 15,
+                    },
+                  },
+
+                  ticks: {
+                    stepSize: 100,
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+
+                  title: {
+                    display: true,
+
+                    text: "Average Comparisons per Search",
+
+                    font: {
+                      size: 15,
+                    },
+                  },
+                },
+              },
+            },
+          })
+
+          // graph2 height
+
+          const heightCtx = document
+            .getElementById("heightChart")
+            .getContext("2d")
+
+          new Chart(heightCtx, {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  ...randomStyle,
+
+                  data: randomHeightData,
+                },
+
+                {
+                  ...sortedStyle,
+
+                  data: sortedHeightData,
+                },
+
+                {
+                  ...reverseStyle,
+
+                  data: reverseHeightData,
+                },
+              ],
+            },
+
+            options: {
+              responsive: true,
+
+              maintainAspectRatio: false,
+
+              interaction: {
+                mode: "nearest",
+
+                intersect: false,
+              },
+
+              plugins: {
+                legend: {
+                  display: true,
+
+                  position: "top",
+                },
+
+                tooltip: {
+                  callbacks: {
+                    title: function (context) {
+                      return "Number of Elements: " + context[0].parsed.x
+                    },
+
+                    label: function (context) {
+                      return (
+                        context.dataset.label + ": Height = " + context.parsed.y
+                      )
+                    },
+                  },
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+
+                  min: 1,
+
+                  max: 1000,
+
+                  title: {
+                    display: true,
+
+                    text: "Number of Elements (n)",
+
+                    font: {
+                      size: 15,
+                    },
+                  },
+
+                  ticks: {
+                    stepSize: 100,
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+
+                  title: {
+                    display: true,
+
+                    text: "AVL Tree Height",
+
+                    font: {
+                      size: 15,
+                    },
+                  },
+
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            },
+          })
+        },
+
+        error: function (error) {
+          console.error("Error loading CSV:", error)
+
+          alert("Could not load avl_search_comparisons.csv")
+        },
+      })
+    </script>
+  </body>
+</html>
