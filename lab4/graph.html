@@ -1,0 +1,431 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Red-Black Tree Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f4f4f4;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .description {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #555;
+      }
+
+      .chart-container {
+        width: 95%;
+        max-width: 1200px;
+        height: 500px;
+        margin: 30px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Red-Black Tree Analysis</h1>
+
+    <div class="description">
+      Comparison-based analysis for Random, Sorted and Reverse Sorted inputs
+    </div>
+    <div class="chart-container">
+      <canvas id="heightChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="insertionChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="deletionChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <canvas id="searchChart"></canvas>
+    </div>
+
+    <script>
+      fetch("rb_1000_comparisons.csv")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Could not load rb_1000_comparisons.csv")
+          }
+
+          return response.text()
+        })
+
+        .then((csvText) => {
+          const lines = csvText.trim().split("\n")
+
+          const headers = lines[0].split(",")
+
+          const data = []
+
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(",")
+
+            if (values.length < headers.length) {
+              continue
+            }
+
+            data.push({
+              input_type: values[0],
+              nodes: Number(values[1]),
+              value: Number(values[2]),
+              insertion_comparisons: Number(values[3]),
+              height: Number(values[4]),
+              search_comparisons: Number(values[5]),
+              deletion_comparisons: Number(values[6]),
+            })
+          }
+
+          const randomData = data.filter((row) => row.input_type === "random")
+
+          const sortedData = data.filter((row) => row.input_type === "sorted")
+
+          const reverseSortedData = data.filter(
+            (row) => row.input_type === "reverse_sorted",
+          )
+
+          const commonOptions = {
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            interaction: {
+              mode: "index",
+              intersect: false,
+            },
+
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+              },
+
+              tooltip: {
+                enabled: true,
+              },
+            },
+
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Number of Nodes",
+                },
+              },
+
+              y: {
+                beginAtZero: true,
+              },
+            },
+          }
+
+          new Chart(document.getElementById("heightChart"), {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  label: "Random",
+                  data: randomData.map((row) => ({
+                    x: row.nodes,
+                    y: row.height,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted",
+                  data: sortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.height,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Reverse Sorted",
+                  data: reverseSortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.height,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              ...commonOptions,
+
+              plugins: {
+                ...commonOptions.plugins,
+
+                title: {
+                  display: true,
+                  text: "Tree Height vs Number of Nodes",
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+                  title: {
+                    display: true,
+                    text: "Number of Nodes",
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Tree Height",
+                  },
+                },
+              },
+            },
+          })
+
+          new Chart(document.getElementById("insertionChart"), {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  label: "Random",
+                  data: randomData.map((row) => ({
+                    x: row.nodes,
+                    y: row.insertion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted",
+                  data: sortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.insertion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Reverse Sorted",
+                  data: reverseSortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.insertion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              ...commonOptions,
+
+              plugins: {
+                ...commonOptions.plugins,
+
+                title: {
+                  display: true,
+                  text: "Insertion Comparisons vs Number of Nodes",
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+                  title: {
+                    display: true,
+                    text: "Number of Nodes",
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Insertion Comparisons",
+                  },
+                },
+              },
+            },
+          })
+
+          new Chart(document.getElementById("deletionChart"), {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  label: "Random",
+                  data: randomData.map((row) => ({
+                    x: row.nodes,
+                    y: row.deletion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted",
+                  data: sortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.deletion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Reverse Sorted",
+                  data: reverseSortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.deletion_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              ...commonOptions,
+
+              plugins: {
+                ...commonOptions.plugins,
+
+                title: {
+                  display: true,
+                  text: "Deletion Comparisons vs Number of Nodes",
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+                  title: {
+                    display: true,
+                    text: "Number of Nodes",
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Deletion Comparisons",
+                  },
+                },
+              },
+            },
+          })
+
+          new Chart(document.getElementById("searchChart"), {
+            type: "line",
+
+            data: {
+              datasets: [
+                {
+                  label: "Random",
+                  data: randomData.map((row) => ({
+                    x: row.nodes,
+                    y: row.search_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Sorted",
+                  data: sortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.search_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+
+                {
+                  label: "Reverse Sorted",
+                  data: reverseSortedData.map((row) => ({
+                    x: row.nodes,
+                    y: row.search_comparisons,
+                  })),
+                  tension: 0.1,
+                  pointRadius: 0,
+                },
+              ],
+            },
+
+            options: {
+              ...commonOptions,
+
+              plugins: {
+                ...commonOptions.plugins,
+
+                title: {
+                  display: true,
+                  text: "Search Comparisons vs Number of Nodes",
+                },
+              },
+
+              scales: {
+                x: {
+                  type: "linear",
+                  title: {
+                    display: true,
+                    text: "Number of Nodes",
+                  },
+                },
+
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: "Search Comparisons",
+                  },
+                },
+              },
+            },
+          })
+        })
+
+        .catch((error) => {
+          console.error(error)
+
+          document.body.innerHTML += `<p style="text-align:center;color:red;">
+                    Error loading CSV: ${error.message}
+                </p>`
+        })
+    </script>
+  </body>
+</html>

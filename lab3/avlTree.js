@@ -1,9 +1,5 @@
 import fs from "fs"
 
-// ==================================================
-// Node
-// ==================================================
-
 class Node {
   constructor(value) {
     this.value = value
@@ -13,15 +9,7 @@ class Node {
   }
 }
 
-// ==================================================
-// AVL Tree
-// ==================================================
-
 class AVLTree {
-  // ------------------------------------------------
-  // Get height of a node
-  // ------------------------------------------------
-
   getHeight(node) {
     if (node === null) {
       return 0
@@ -29,10 +17,6 @@ class AVLTree {
 
     return node.height
   }
-
-  // ------------------------------------------------
-  // Get balance factor
-  // ------------------------------------------------
 
   getBalance(node) {
     if (node === null) {
@@ -42,29 +26,18 @@ class AVLTree {
     return this.getHeight(node.left) - this.getHeight(node.right)
   }
 
-  // ------------------------------------------------
-  // Update height
-  // ------------------------------------------------
-
   updateHeight(node) {
     node.height =
       1 + Math.max(this.getHeight(node.left), this.getHeight(node.right))
   }
 
-  // ------------------------------------------------
-  // Right Rotation
-  // LL Case
-  // ------------------------------------------------
-
   rightRotate(y) {
     const x = y.left
     const T2 = x.right
 
-    // Rotation
     x.right = y
     y.left = T2
 
-    // Update heights
     this.updateHeight(y)
     this.updateHeight(x)
 
@@ -73,20 +46,13 @@ class AVLTree {
     return x
   }
 
-  // ------------------------------------------------
-  // Left Rotation
-  // RR Case
-  // ------------------------------------------------
-
   leftRotate(x) {
     const y = x.right
     const T2 = y.left
 
-    // Rotation
     y.left = x
     x.right = T2
 
-    // Update heights
     this.updateHeight(x)
     this.updateHeight(y)
 
@@ -94,10 +60,6 @@ class AVLTree {
 
     return y
   }
-
-  // ------------------------------------------------
-  // Insert
-  // ------------------------------------------------
 
   insert(root, value) {
     if (root === null) {
