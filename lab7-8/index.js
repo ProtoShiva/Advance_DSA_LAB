@@ -1,10 +1,6 @@
 import fs from "fs"
 import { performance } from "perf_hooks"
 
-// ==========================================
-// EXPERIMENT CONFIGURATION
-// ==========================================
-
 const SIZES = [1000, 5000, 10000, 50000, 100000]
 
 const INPUT_TYPES = ["random", "ascending", "descending"]
@@ -14,12 +10,6 @@ const SEARCH_QUERIES = 1000
 const TIMING_REPEATS = 5
 
 const OUTPUT_FILE = "min_heap_results.csv"
-
-// ==========================================
-// RANDOM NUMBER GENERATOR
-// ==========================================
-
-// Seeded random generator for reproducible experiments.
 
 function mulberry32(seed) {
   return function () {
@@ -31,10 +21,6 @@ function mulberry32(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
   }
 }
-
-// ==========================================
-// GENERATE INPUT ARRAYS
-// ==========================================
 
 function generateInput(n, type, seed = 12345) {
   const arr = Array.from({ length: n }, (_, i) => i + 1)

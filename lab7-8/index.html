@@ -3,169 +3,454 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Min Heap Lab Graphs</title>
+
+    <title>Min Heap Performance Analysis</title>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         font-family: Arial, sans-serif;
-        margin: 24px;
+        margin: 0;
+        padding: 25px;
+        background: #f4f6f9;
+        color: #222;
       }
+
       h1 {
         text-align: center;
+        margin-bottom: 10px;
       }
-      .note {
-        max-width: 1000px;
-        margin: 0 auto 24px;
-        line-height: 1.5;
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 25px;
       }
-      .chart-container {
-        width: 95%;
-        height: 390px;
-        margin: 24px auto 42px;
-      }
-      canvas {
+
+      .upload-section {
         background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      input[type="file"] {
+        margin: 12px;
+      }
+
+      #status {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #16803c;
+      }
+
+      .operation-section {
+        margin-bottom: 40px;
+      }
+
+      .operation-section h2 {
+        background: #26374a;
+        color: white;
+        padding: 14px;
+        border-radius: 7px;
+        font-size: 20px;
+      }
+
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .chart-card {
+        background: white;
+        padding: 18px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        min-width: 0;
+      }
+
+      .chart-card h3 {
+        text-align: center;
+        font-size: 16px;
+        margin-top: 5px;
+        margin-bottom: 18px;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+      }
+
+      .note {
+        background: #fff;
+        border-left: 4px solid #64748b;
+        padding: 14px;
+        margin: 20px 0;
+        color: #444;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 850px) {
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
+
   <body>
-    <h1>Binary Min Heap — Lab 7 & 8</h1>
-    <p class="note">
-      Open this page using VS Code Live Server. Keep <b>min_heap_results.csv</b>
-      in the same folder. Each graph compares Random, Ascending and Descending
-      inputs. The x-axis is N. Search graphs show one search operation per
-      experiment; construction/insertion/extraction show total operation
-      metrics.
-    </p>
+    <h1>Min Heap Performance Analysis</h1>
 
-    <h2>1. Execution Time — Bottom-up Construction</h2>
-    <div class="chart-container"><canvas id="bottomTime"></canvas></div>
+    <p class="subtitle">Comparisons, Swaps and Execution Time Analysis</p>
 
-    <h2>2. Execution Time — Top-down Construction</h2>
-    <div class="chart-container"><canvas id="topTime"></canvas></div>
+    <!-- CSV UPLOAD -->
 
-    <h2>3. Execution Time — Insert N Elements</h2>
-    <div class="chart-container"><canvas id="insertTime"></canvas></div>
+    <div class="upload-section">
+      <h3>Upload Experimental CSV File</h3>
 
-    <h2>4. Execution Time — Repeated Extract-Min</h2>
-    <div class="chart-container"><canvas id="extractTime"></canvas></div>
+      <input type="file" id="csvFile" accept=".csv" />
 
-    <h2>5. Comparisons — Bottom-up Construction</h2>
-    <div class="chart-container"><canvas id="bottomComp"></canvas></div>
+      <p id="status">Please upload min_heap_results.csv</p>
+    </div>
 
-    <h2>6. Comparisons — Top-down Construction</h2>
-    <div class="chart-container"><canvas id="topComp"></canvas></div>
+    <div class="note">
+      <strong>Graph information:</strong><br />
+      X-axis: Number of elements (N).<br />
+      Y-axis: Comparisons, swaps or execution time.<br />
+      Each graph compares Random, Ascending and Descending inputs. Construction,
+      insertion and extraction show average total cost per trial. Search graphs
+      show average cost per query.
+    </div>
 
-    <h2>7. Comparisons — Insert N Elements</h2>
-    <div class="chart-container"><canvas id="insertComp"></canvas></div>
+    <!-- ALL GRAPHS WILL BE GENERATED HERE -->
 
-    <h2>8. Comparisons — Repeated Extract-Min</h2>
-    <div class="chart-container"><canvas id="extractComp"></canvas></div>
-
-    <h2>9. Comparisons — Search Existing</h2>
-    <div class="chart-container"><canvas id="existingComp"></canvas></div>
-
-    <h2>10. Comparisons — Search Missing</h2>
-    <div class="chart-container"><canvas id="missingComp"></canvas></div>
-
-    <h2>11. Swaps — Bottom-up Construction</h2>
-    <div class="chart-container"><canvas id="bottomSwaps"></canvas></div>
-
-    <h2>12. Swaps — Top-down Construction</h2>
-    <div class="chart-container"><canvas id="topSwaps"></canvas></div>
-
-    <h2>13. Swaps — Insert N Elements</h2>
-    <div class="chart-container"><canvas id="insertSwaps"></canvas></div>
-
-    <h2>14. Swaps — Repeated Extract-Min</h2>
-    <div class="chart-container"><canvas id="extractSwaps"></canvas></div>
+    <div id="dashboard"></div>
 
     <script>
-      async function loadCSV() {
-        const response = await fetch("min_heap_results.csv")
-        if (!response.ok)
-          throw new Error(
-            "Could not load min_heap_results.csv. Use Live Server.",
-          )
-        const text = await response.text()
+      // =====================================
+      // CONFIGURATION
+      // =====================================
+
+      const operations = [
+        {
+          id: "bottom_up",
+          title: "Bottom-up Heap Construction",
+        },
+
+        {
+          id: "top_down",
+          title: "Top-down Heap Construction",
+        },
+
+        {
+          id: "insertion_N",
+          title: "Insertion of N Elements",
+        },
+
+        {
+          id: "extract_min",
+          title: "Repeated Extract-Min",
+        },
+
+        {
+          id: "search_existing",
+          title: "Searching for Existing Element",
+        },
+
+        {
+          id: "search_non_existing",
+          title: "Searching for Non-existing Element",
+        },
+      ]
+
+      const metrics = [
+        {
+          id: "comparisons",
+          title: "Number of Comparisons",
+          label: "Comparisons",
+        },
+
+        {
+          id: "swaps",
+          title: "Number of Swaps",
+          label: "Swaps",
+        },
+
+        {
+          id: "time_ms",
+          title: "Execution Time",
+          label: "Time (ms)",
+        },
+      ]
+
+      const inputTypes = ["random", "ascending", "descending"]
+
+      const colors = {
+        random: "#2563eb",
+        ascending: "#16a34a",
+        descending: "#dc2626",
+      }
+
+      let chartInstances = []
+
+      // =====================================
+      // CSV PARSER
+      // =====================================
+
+      function parseCSV(text) {
         const lines = text.trim().split(/\r?\n/)
-        const headers = lines.shift().split(",")
-        return lines.map((line) => {
-          const values = line.split(",")
+
+        const headers = lines[0].split(",").map((h) => h.trim())
+
+        const requiredHeaders = [
+          "input_type",
+          "n",
+          "operation",
+          "comparisons",
+          "swaps",
+          "time_ms",
+        ]
+
+        for (const header of requiredHeaders) {
+          if (!headers.includes(header)) {
+            throw new Error("Missing CSV column: " + header)
+          }
+        }
+
+        const rows = []
+
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue
+
+          const values = lines[i].split(",")
+
           const row = {}
-          headers.forEach((header, i) => (row[header] = values[i]))
-          row.N = Number(row.N)
-          row.timeMs = Number(row.timeMs)
+
+          headers.forEach((header, index) => {
+            row[header] = values[index]?.trim()
+          })
+
+          row.n = Number(row.n)
           row.comparisons = Number(row.comparisons)
           row.swaps = Number(row.swaps)
-          return row
+          row.time_ms = Number(row.time_ms)
+
+          rows.push(row)
+        }
+
+        return rows
+      }
+
+      // =====================================
+      // CREATE DASHBOARD
+      // =====================================
+
+      function createDashboard(rows) {
+        const dashboard = document.getElementById("dashboard")
+
+        // Destroy previous charts.
+        chartInstances.forEach((chart) => chart.destroy())
+
+        chartInstances = []
+
+        dashboard.innerHTML = ""
+
+        // Generate six operation sections.
+        operations.forEach((operation) => {
+          const section = document.createElement("section")
+
+          section.className = "operation-section"
+
+          const heading = document.createElement("h2")
+
+          heading.textContent = operation.title
+
+          section.appendChild(heading)
+
+          const grid = document.createElement("div")
+
+          grid.className = "chart-grid"
+
+          // Generate three metric graphs.
+          metrics.forEach((metric) => {
+            const card = document.createElement("div")
+
+            card.className = "chart-card"
+
+            const title = document.createElement("h3")
+
+            title.textContent = metric.title + " vs Number of Elements"
+
+            card.appendChild(title)
+
+            const container = document.createElement("div")
+
+            container.className = "chart-container"
+
+            const canvas = document.createElement("canvas")
+
+            card.appendChild(container)
+
+            container.appendChild(canvas)
+
+            grid.appendChild(card)
+
+            // Filter data for this operation.
+            const filteredRows = rows.filter((row) => {
+              return row.operation === operation.id
+            })
+
+            // Get all available N values.
+            const sizes = [...new Set(filteredRows.map((row) => row.n))].sort(
+              (a, b) => a - b,
+            )
+
+            // Build three datasets.
+            const datasets = inputTypes.map((type) => {
+              const data = sizes.map((n) => {
+                const matchingRow = filteredRows.find((row) => {
+                  return row.n === n && row.input_type === type
+                })
+
+                return matchingRow ? matchingRow[metric.id] : null
+              })
+
+              return {
+                label: type.charAt(0).toUpperCase() + type.slice(1),
+
+                data: data,
+
+                borderColor: colors[type],
+
+                backgroundColor: colors[type],
+
+                borderWidth: 2,
+
+                pointRadius: 5,
+
+                pointHoverRadius: 7,
+
+                tension: 0.2,
+
+                spanGaps: false,
+              }
+            })
+
+            // =================================
+            // CHART.JS GRAPH
+            // =================================
+
+            const chart = new Chart(canvas, {
+              type: "line",
+
+              data: {
+                labels: sizes,
+
+                datasets: datasets,
+              },
+
+              options: {
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                interaction: {
+                  mode: "index",
+                  intersect: false,
+                },
+
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: "bottom",
+                  },
+
+                  tooltip: {
+                    callbacks: {
+                      title: function (context) {
+                        return "N = " + context[0].label
+                      },
+                    },
+                  },
+                },
+
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+
+                      text: "Number of Elements (N)",
+                    },
+                  },
+
+                  y: {
+                    beginAtZero: true,
+
+                    title: {
+                      display: true,
+
+                      text: metric.label,
+                    },
+                  },
+                },
+              },
+            })
+
+            chartInstances.push(chart)
+          })
+
+          section.appendChild(grid)
+
+          dashboard.appendChild(section)
         })
       }
 
-      function drawChart(rows, canvasId, operation, metric, title) {
-        const types = ["Random", "Ascending", "Descending"]
-        const datasets = types.map((type) => {
-          const selected = rows
-            .filter((r) => r.operation === operation && r.inputType === type)
-            .sort((a, b) => a.N - b.N)
-          return {
-            label: type,
-            data: selected.map((r) => ({ x: r.N, y: r[metric] })),
-            borderWidth: 2,
-            pointRadius: 4,
-            tension: 0.1,
+      // =====================================
+      // CSV FILE UPLOAD
+      // =====================================
+
+      document
+        .getElementById("csvFile")
+        .addEventListener("change", function (event) {
+          const file = event.target.files[0]
+
+          if (!file) return
+
+          const reader = new FileReader()
+
+          reader.onload = function (e) {
+            try {
+              const rows = parseCSV(e.target.result)
+
+              if (rows.length === 0) {
+                throw new Error("CSV contains no data rows.")
+              }
+
+              createDashboard(rows)
+
+              document.getElementById("status").textContent =
+                "Successfully loaded " +
+                rows.length +
+                " experimental records. 18 graphs generated."
+            } catch (error) {
+              document.getElementById("status").textContent =
+                "Error: " + error.message
+
+              document.getElementById("status").style.color = "red"
+            }
           }
-        })
 
-        new Chart(document.getElementById(canvasId), {
-          type: "line",
-          data: { datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            parsing: false,
-            scales: {
-              x: {
-                type: "linear",
-                title: { display: true, text: "Number of Elements (N)" },
-              },
-              y: {
-                beginAtZero: true,
-                title: { display: true, text: title },
-              },
-            },
-          },
-        })
-      }
-
-      loadCSV()
-        .then((rows) => {
-          const config = [
-            ["bottomTime", "BottomUpBuild", "timeMs", "Time (ms)"],
-            ["topTime", "TopDownBuild", "timeMs", "Time (ms)"],
-            ["insertTime", "InsertN", "timeMs", "Time (ms)"],
-            ["extractTime", "RepeatedExtractMin", "timeMs", "Time (ms)"],
-            ["bottomComp", "BottomUpBuild", "comparisons", "Comparisons"],
-            ["topComp", "TopDownBuild", "comparisons", "Comparisons"],
-            ["insertComp", "InsertN", "comparisons", "Comparisons"],
-            ["extractComp", "RepeatedExtractMin", "comparisons", "Comparisons"],
-            ["existingComp", "SearchExisting", "comparisons", "Comparisons"],
-            ["missingComp", "SearchMissing", "comparisons", "Comparisons"],
-            ["bottomSwaps", "BottomUpBuild", "swaps", "Swaps"],
-            ["topSwaps", "TopDownBuild", "swaps", "Swaps"],
-            ["insertSwaps", "InsertN", "swaps", "Swaps"],
-            ["extractSwaps", "RepeatedExtractMin", "swaps", "Swaps"],
-          ]
-          config.forEach(([id, op, metric, label]) =>
-            drawChart(rows, id, op, metric, label),
-          )
-        })
-        .catch((error) => {
-          document.body.insertAdjacentHTML(
-            "beforeend",
-            `<p style="color:red;text-align:center">${error.message}</p>`,
-          )
-          console.error(error)
+          reader.readAsText(file)
         })
     </script>
   </body>
