@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Min Heap Lab Graphs</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+      }
+      h1 {
+        text-align: center;
+      }
+      .note {
+        max-width: 1000px;
+        margin: 0 auto 24px;
+        line-height: 1.5;
+      }
+      .chart-container {
+        width: 95%;
+        height: 390px;
+        margin: 24px auto 42px;
+      }
+      canvas {
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Binary Min Heap — Lab 7 & 8</h1>
+    <p class="note">
+      Open this page using VS Code Live Server. Keep <b>min_heap_results.csv</b>
+      in the same folder. Each graph compares Random, Ascending and Descending
+      inputs. The x-axis is N. Search graphs show one search operation per
+      experiment; construction/insertion/extraction show total operation
+      metrics.
+    </p>
+
+    <h2>1. Execution Time — Bottom-up Construction</h2>
+    <div class="chart-container"><canvas id="bottomTime"></canvas></div>
+
+    <h2>2. Execution Time — Top-down Construction</h2>
+    <div class="chart-container"><canvas id="topTime"></canvas></div>
+
+    <h2>3. Execution Time — Insert N Elements</h2>
+    <div class="chart-container"><canvas id="insertTime"></canvas></div>
+
+    <h2>4. Execution Time — Repeated Extract-Min</h2>
+    <div class="chart-container"><canvas id="extractTime"></canvas></div>
+
+    <h2>5. Comparisons — Bottom-up Construction</h2>
+    <div class="chart-container"><canvas id="bottomComp"></canvas></div>
+
+    <h2>6. Comparisons — Top-down Construction</h2>
+    <div class="chart-container"><canvas id="topComp"></canvas></div>
+
+    <h2>7. Comparisons — Insert N Elements</h2>
+    <div class="chart-container"><canvas id="insertComp"></canvas></div>
+
+    <h2>8. Comparisons — Repeated Extract-Min</h2>
+    <div class="chart-container"><canvas id="extractComp"></canvas></div>
+
+    <h2>9. Comparisons — Search Existing</h2>
+    <div class="chart-container"><canvas id="existingComp"></canvas></div>
+
+    <h2>10. Comparisons — Search Missing</h2>
+    <div class="chart-container"><canvas id="missingComp"></canvas></div>
+
+    <h2>11. Swaps — Bottom-up Construction</h2>
+    <div class="chart-container"><canvas id="bottomSwaps"></canvas></div>
+
+    <h2>12. Swaps — Top-down Construction</h2>
+    <div class="chart-container"><canvas id="topSwaps"></canvas></div>
+
+    <h2>13. Swaps — Insert N Elements</h2>
+    <div class="chart-container"><canvas id="insertSwaps"></canvas></div>
+
+    <h2>14. Swaps — Repeated Extract-Min</h2>
+    <div class="chart-container"><canvas id="extractSwaps"></canvas></div>
+
+    <script>
+      async function loadCSV() {
+        const response = await fetch("min_heap_results.csv")
+        if (!response.ok)
+          throw new Error(
+            "Could not load min_heap_results.csv. Use Live Server.",
+          )
+        const text = await response.text()
+        const lines = text.trim().split(/\r?\n/)
+        const headers = lines.shift().split(",")
+        return lines.map((line) => {
+          const values = line.split(",")
+          const row = {}
+          headers.forEach((header, i) => (row[header] = values[i]))
+          row.N = Number(row.N)
+          row.timeMs = Number(row.timeMs)
+          row.comparisons = Number(row.comparisons)
+          row.swaps = Number(row.swaps)
+          return row
+        })
+      }
+
+      function drawChart(rows, canvasId, operation, metric, title) {
+        const types = ["Random", "Ascending", "Descending"]
+        const datasets = types.map((type) => {
+          const selected = rows
+            .filter((r) => r.operation === operation && r.inputType === type)
+            .sort((a, b) => a.N - b.N)
+          return {
+            label: type,
+            data: selected.map((r) => ({ x: r.N, y: r[metric] })),
+            borderWidth: 2,
+            pointRadius: 4,
+            tension: 0.1,
+          }
+        })
+
+        new Chart(document.getElementById(canvasId), {
+          type: "line",
+          data: { datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            parsing: false,
+            scales: {
+              x: {
+                type: "linear",
+                title: { display: true, text: "Number of Elements (N)" },
+              },
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: title },
+              },
+            },
+          },
+        })
+      }
+
+      loadCSV()
+        .then((rows) => {
+          const config = [
+            ["bottomTime", "BottomUpBuild", "timeMs", "Time (ms)"],
+            ["topTime", "TopDownBuild", "timeMs", "Time (ms)"],
+            ["insertTime", "InsertN", "timeMs", "Time (ms)"],
+            ["extractTime", "RepeatedExtractMin", "timeMs", "Time (ms)"],
+            ["bottomComp", "BottomUpBuild", "comparisons", "Comparisons"],
+            ["topComp", "TopDownBuild", "comparisons", "Comparisons"],
+            ["insertComp", "InsertN", "comparisons", "Comparisons"],
+            ["extractComp", "RepeatedExtractMin", "comparisons", "Comparisons"],
+            ["existingComp", "SearchExisting", "comparisons", "Comparisons"],
+            ["missingComp", "SearchMissing", "comparisons", "Comparisons"],
+            ["bottomSwaps", "BottomUpBuild", "swaps", "Swaps"],
+            ["topSwaps", "TopDownBuild", "swaps", "Swaps"],
+            ["insertSwaps", "InsertN", "swaps", "Swaps"],
+            ["extractSwaps", "RepeatedExtractMin", "swaps", "Swaps"],
+          ]
+          config.forEach(([id, op, metric, label]) =>
+            drawChart(rows, id, op, metric, label),
+          )
+        })
+        .catch((error) => {
+          document.body.insertAdjacentHTML(
+            "beforeend",
+            `<p style="color:red;text-align:center">${error.message}</p>`,
+          )
+          console.error(error)
+        })
+    </script>
+  </body>
+</html>
