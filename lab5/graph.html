@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Segment Tree Performance Analysis</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 25px;
+        background: #f4f6f9;
+      }
+
+      h1 {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      .upload-section {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+      }
+
+      .chart-container {
+        width: 90%;
+        max-width: 1100px;
+        height: 400px;
+        margin: 25px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      #status {
+        margin-top: 12px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Segment Tree Performance Analysis</h1>
+
+    <div class="upload-section">
+      <h3>Select segment_comparison.csv</h3>
+
+      <input type="file" id="csvFile" accept=".csv" />
+
+      <p id="status">Please select your CSV file.</p>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="buildChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="rangeQueryChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="updateChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="heightChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="comparisonChart"></canvas>
+    </div>
+
+    <script>
+      let charts = []
+
+      document
+        .getElementById("csvFile")
+        .addEventListener("change", function (event) {
+          const file = event.target.files[0]
+
+          if (!file) return
+
+          const reader = new FileReader()
+
+          reader.onload = function (e) {
+            try {
+              const rows = parseCSV(e.target.result)
+
+              if (rows.length < 2) {
+                throw new Error("CSV file contains no data.")
+              }
+
+              const headers = rows[0]
+
+              const requiredColumns = [
+                "input_type",
+                "n",
+                "build_comparisons",
+                "segment_query_comparisons",
+                "linear_query_comparisons",
+                "update_comparisons",
+                "height",
+              ]
+
+              requiredColumns.forEach((column) => {
+                if (!headers.includes(column)) {
+                  throw new Error("Missing CSV column: " + column)
+                }
+              })
+
+              const data = rows
+                .slice(1)
+                .map((row) => {
+                  const obj = {}
+
+                  headers.forEach((header, index) => {
+                    obj[header] = row[index]
+                  })
+
+                  return {
+                    input_type: obj.input_type,
+
+                    n: Number(obj.n),
+
+                    build_comparisons: Number(obj.build_comparisons),
+
+                    segment_query_comparisons: Number(
+                      obj.segment_query_comparisons,
+                    ),
+
+                    linear_query_comparisons: Number(
+                      obj.linear_query_comparisons,
+                    ),
+
+                    update_comparisons: Number(obj.update_comparisons),
+
+                    height: Number(obj.height),
+                  }
+                })
+                .filter(
+                  (row) =>
+                    row.input_type &&
+                    Number.isFinite(row.n) &&
+                    Number.isFinite(row.build_comparisons) &&
+                    Number.isFinite(row.segment_query_comparisons) &&
+                    Number.isFinite(row.linear_query_comparisons) &&
+                    Number.isFinite(row.update_comparisons) &&
+                    Number.isFinite(row.height),
+                )
+
+              if (data.length === 0) {
+                throw new Error("No valid data rows found.")
+              }
+
+              drawCharts(data)
+
+              document.getElementById("status").textContent =
+                "CSV loaded successfully! " +
+                data.length +
+                " records found. All 5 graphs generated."
+            } catch (error) {
+              document.getElementById("status").textContent =
+                "Error: " + error.message
+            }
+          }
+
+          reader.readAsText(file)
+        })
+
+      function parseCSV(text) {
+        return text
+          .trim()
+          .split(/\r?\n/)
+          .map((line) => line.split(",").map((value) => value.trim()))
+      }
+
+      function destroyCharts() {
+        charts.forEach((chart) => chart.destroy())
+
+        charts = []
+      }
+
+      function makeDatasets(data, field, labelPrefix) {
+        const types = ["random", "sorted", "reverse-sorted"]
+
+        const colors = {
+          random: "blue",
+          sorted: "red",
+          "reverse-sorted": "green",
+        }
+
+        return types.map((type) => {
+          const filtered = data
+            .filter((row) => row.input_type === type)
+            .sort((a, b) => a.n - b.n)
+
+          return {
+            label: labelPrefix + " - " + type,
+
+            data: filtered.map((row) => ({
+              x: row.n,
+              y: row[field],
+            })),
+
+            borderColor: colors[type],
+
+            backgroundColor: colors[type],
+
+            borderWidth: 2,
+
+            tension: 0.2,
+
+            pointRadius: 4,
+          }
+        })
+      }
+
+      function chartOptions(title, yLabel) {
+        return {
+          responsive: true,
+
+          maintainAspectRatio: false,
+
+          plugins: {
+            title: {
+              display: true,
+
+              text: title,
+
+              font: {
+                size: 18,
+              },
+            },
+
+            legend: {
+              position: "bottom",
+            },
+          },
+
+          scales: {
+            x: {
+              type: "linear",
+
+              title: {
+                display: true,
+
+                text: "Number of Elements",
+              },
+            },
+
+            y: {
+              beginAtZero: true,
+
+              title: {
+                display: true,
+
+                text: yLabel,
+              },
+            },
+          },
+        }
+      }
+
+      function drawCharts(data) {
+        destroyCharts()
+
+        const buildChart = new Chart(
+          document.getElementById("buildChart"),
+
+          {
+            type: "line",
+
+            data: {
+              datasets: makeDatasets(data, "build_comparisons", "Construction"),
+            },
+
+            options: chartOptions(
+              "1. Construction Comparisons vs Number of Elements",
+
+              "Number of Comparisons",
+            ),
+          },
+        )
+
+        charts.push(buildChart)
+
+        const rangeQueryChart = new Chart(
+          document.getElementById("rangeQueryChart"),
+
+          {
+            type: "line",
+
+            data: {
+              datasets: makeDatasets(
+                data,
+                "segment_query_comparisons",
+                "Segment Tree Range Query",
+              ),
+            },
+
+            options: chartOptions(
+              "2. Range Query Comparisons vs Number of Elements (Segment Tree)",
+
+              "Average Comparisons per Query",
+            ),
+          },
+        )
+
+        charts.push(rangeQueryChart)
+
+        const updateChart = new Chart(
+          document.getElementById("updateChart"),
+
+          {
+            type: "line",
+
+            data: {
+              datasets: makeDatasets(
+                data,
+                "update_comparisons",
+                "Point Update",
+              ),
+            },
+
+            options: chartOptions(
+              "3. Point Update Comparisons vs Number of Elements",
+
+              "Number of Comparisons",
+            ),
+          },
+        )
+
+        charts.push(updateChart)
+
+        const heightChart = new Chart(
+          document.getElementById("heightChart"),
+
+          {
+            type: "line",
+
+            data: {
+              datasets: makeDatasets(data, "height", "Tree Height"),
+            },
+
+            options: chartOptions(
+              "4. Segment Tree Height vs Number of Elements",
+
+              "Tree Height (Edges)",
+            ),
+          },
+        )
+
+        charts.push(heightChart)
+
+        const queryDatasets = []
+
+        const types = ["random", "sorted", "reverse-sorted"]
+
+        const colors = {
+          random: "blue",
+
+          sorted: "red",
+
+          "reverse-sorted": "green",
+        }
+
+        types.forEach((type) => {
+          const filtered = data
+
+            .filter((row) => row.input_type === type)
+
+            .sort((a, b) => a.n - b.n)
+
+          queryDatasets.push({
+            label: "Segment Tree - " + type,
+
+            data: filtered.map((row) => ({
+              x: row.n,
+
+              y: row.segment_query_comparisons,
+            })),
+
+            borderColor: colors[type],
+
+            backgroundColor: colors[type],
+
+            borderWidth: 2,
+
+            tension: 0.2,
+
+            pointRadius: 4,
+          })
+
+          queryDatasets.push({
+            label: "Linear Search - " + type,
+
+            data: filtered.map((row) => ({
+              x: row.n,
+
+              y: row.linear_query_comparisons,
+            })),
+
+            borderColor: colors[type],
+
+            backgroundColor: colors[type],
+
+            borderWidth: 2,
+
+            borderDash: [7, 5],
+
+            tension: 0.2,
+
+            pointRadius: 4,
+          })
+        })
+
+        const comparisonChart = new Chart(
+          document.getElementById("comparisonChart"),
+
+          {
+            type: "line",
+
+            data: {
+              datasets: queryDatasets,
+            },
+
+            options: chartOptions(
+              "5. Segment Tree vs Linear Search Query Comparisons",
+
+              "Average Comparisons per Query",
+            ),
+          },
+        )
+
+        charts.push(comparisonChart)
+      }
+    </script>
+  </body>
+</html>
